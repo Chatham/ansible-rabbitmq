@@ -89,7 +89,10 @@ class RabbitMqUser(object):
         self.module = module
         self.username = username
         self.password = password
-        self.tags = tags
+        if tags is None:
+            self.tags = []
+        else:
+            self.tags = tags.split(',')
 
         permissions = dict(
             vhost=vhost,
@@ -119,6 +122,8 @@ class RabbitMqUser(object):
 
                 if tags != '':
                     self._tags = tags.split(',')
+                else:
+                    self._tags = []
 
                 self._permissions = self._get_permissions()
 
@@ -156,7 +161,7 @@ class RabbitMqUser(object):
         return self._exec(cmd)
 
     def has_tags_modifications(self):
-        if not self._tags or not self.tags:
+        if (not self._tags and len(self.tags) > 0) or (not self.tags and len(self._tags) > 0):
             return True
         else:
             for tag in self._tags:
@@ -189,10 +194,6 @@ def main():
     username = module.params['user']
     password = module.params['password']
     tags = module.params['tags']
-    if tags is None:
-        tags = []
-    else:
-        tags = tags.split(',')
     vhost = module.params['vhost']
     configure_priv = module.params['configure_priv']
     write_priv = module.params['write_priv']
