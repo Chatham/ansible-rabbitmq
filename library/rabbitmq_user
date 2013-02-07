@@ -30,29 +30,22 @@ options:
       - Name of user to add
     required: true
     default: null
-    choices: []
-    aliases: [username]
+    aliases: [username, name]
   password:
     description:
       - Password of user to add
     required: false
-    default: ''
-    choices: []
-    aliases: []
+    default: null
   tags:
     description:
       - User tags specified as comma delimited
     required: false
-    default: ''
-    choices: []
-    aliases: []
+    default: null
   vhost:
     description:
       - vhost to apply access privileges.
     required: false
     default: /
-    choices: []
-    aliases: []
   configure_priv:
     description:
       - Regular expression to restrict configure actions on a resource
@@ -60,8 +53,6 @@ options:
       - By default all actions are restricted.
     required: false
     default: ^$
-    choices: []
-    aliases: []
   write_priv:
     description:
       - Regular expression to restrict configure actions on a resource
@@ -69,8 +60,6 @@ options:
       - By default all actions are restricted.
     required: false
     default: ^$
-    choices: []
-    aliases: []
   read_priv:
     description:
       - Regular expression to restrict configure actions on a resource
@@ -78,22 +67,18 @@ options:
       - By default all actions are restricted.
     required: false
     default: ^$
-    choices: []
-    aliases: []
   force:
     description:
       - Deletes and recreates the user.
     required: false
-    default: ^$
-    choices: []
-    aliases: []
+    default: no
+    choices: [yes, no]
   state:
     description:
       - Specify if user is to be added or removed
     required: false
     default: present
     choices: [present, absent]
-    aliases: []
 examples:
   - code: rabbitmq_user user=joe password=changeme vhost="/" configure_priv=".*" read_priv=".*" write_priv=".*" state=present
     description: Add user to server and assign full access control
@@ -189,14 +174,14 @@ class RabbitMqUser(object):
 
 def main():
     arg_spec = dict(
-        user=dict(required=True, aliases=['username']),
-        password=dict(default=''),
-        tags=dict(default=''),
+        user=dict(required=True, aliases=['username', 'name']),
+        password=dict(default=None),
+        tags=dict(default=None),
         vhost=dict(default='/'),
         configure_priv=dict(default='^$'),
         write_priv=dict(default='^$'),
         read_priv=dict(default='^$'),
-        force=dict(default='false'),
+        force=dict(default='no', choices=BOOLEANS),
         state=dict(default='present', choices=['present', 'absent'])
     )
     module = AnsibleModule(argument_spec=arg_spec)
@@ -204,7 +189,7 @@ def main():
     username = module.params['user']
     password = module.params['password']
     tags = module.params['tags']
-    if tags == '':
+    if tags is None:
         tags = []
     else:
         tags = tags.split(',')
