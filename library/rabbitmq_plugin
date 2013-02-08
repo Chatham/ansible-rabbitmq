@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # (c) 2013, Chatham Financial <oss@chathamfinancial.com>
 #
 # This file is part of Ansible
@@ -22,7 +23,7 @@ module: rabbitmq_plugin
 short_description: Adds or removes users to RabbitMQ
 description:
   - Enables or disables RabbitMQ plugins
-version_added: 1.0
+version_added: 1.1
 author: Chris Hoffman
 options:
   names:
@@ -62,10 +63,12 @@ class RabbitMqPlugins(object):
         return self._exec(["list", "-E", "-m"])
 
     def enable(self, name):
-        return self._exec(["enable", name])
+        if not self.check_mode:
+            self._exec(["enable", name])
 
     def disable(self, name):
-        return self._exec(["disable", name])
+        if not self.check_mode:
+            self._exec(["disable", name])
 
 def main():
     arg_spec = dict(
@@ -73,7 +76,10 @@ def main():
         new_only=dict(default='no', choices=BOOLEANS),
         state=dict(default='enabled', choices=['enabled', 'disabled'])
     )
-    module = AnsibleModule(argument_spec=arg_spec)
+    module = AnsibleModule(
+        argument_spec=arg_spec,
+        supports_check_mode=True
+    )
 
     names = module.params['names'].split(',')
     new_only = module.boolean(module.params['new_only'])

@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # (c) 2013, Chatham Financial <oss@chathamfinancial.com>
 #
 # This file is part of Ansible
@@ -16,13 +17,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 DOCUMENTATION = '''
 ---
 module: rabbitmq_user
 short_description: Adds or removes users to RabbitMQ
 description:
   - Add or remove users to RabbitMQ and assign permissions
-version_added: 1.0
+version_added: 1.1
 author: Chris Hoffman
 options:
   user:
@@ -142,23 +144,28 @@ class RabbitMqUser(object):
         return dict()
 
     def add(self):
-        return self._exec(["add_user", self.username, self.password])
+        if not self.module.check_mode:
+            self._exec(["add_user", self.username, self.password])
+
 
     def delete(self):
-        return self._exec(["delete_user", self.username])
+        if not self.module.check_mode:
+            self._exec(["delete_user", self.username])
 
     def set_tags(self):
-        return self._exec(["set_user_tags", self.username] + self.tags)
+        if not self.module.check_mode:
+            self._exec(["set_user_tags", self.username] + self.tags)
 
     def set_permissions(self):
-        cmd = ["set_permissions"]
-        cmd.append('-p')
-        cmd.append(self.permissions['vhost'])
-        cmd.append(self.username)
-        cmd.append(self.permissions['configure_priv'])
-        cmd.append(self.permissions['write_priv'])
-        cmd.append(self.permissions['read_priv'])
-        return self._exec(cmd)
+        if not self.module.check_mode:
+            cmd = ["set_permissions"]
+            cmd.append('-p')
+            cmd.append(self.permissions['vhost'])
+            cmd.append(self.username)
+            cmd.append(self.permissions['configure_priv'])
+            cmd.append(self.permissions['write_priv'])
+            cmd.append(self.permissions['read_priv'])
+            self._exec(cmd)
 
     def has_tags_modifications(self):
         if (not self._tags and len(self.tags) > 0) or (not self.tags and len(self._tags) > 0):
@@ -189,7 +196,10 @@ def main():
         force=dict(default='no', choices=BOOLEANS),
         state=dict(default='present', choices=['present', 'absent'])
     )
-    module = AnsibleModule(argument_spec=arg_spec)
+    module = AnsibleModule(
+        argument_spec=arg_spec,
+        supports_check_mode=True
+    )
 
     username = module.params['user']
     password = module.params['password']
